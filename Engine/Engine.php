@@ -1,25 +1,33 @@
 <?php
-require_once(__ROOT__.'Engine/Autoload.php');
+namespace Simple;
 
-$modules = new Modules();
+use \Simple\Core\Mapper;
+use \Simple\Core\Modules;
+use \Simple\Core\Factory;
 
-$url = new Url;
+class Engine{
 
-$requiredController = $url->Return()[1];
-$requiredMethod = $url->Return()[2];
-$requiredParameters = array_slice($url->Return(), 3);
+    public static function run(){
 
+        require_once(__ROOT__.'Engine/Config.php');
+        require_once(__ROOT__.'Engine/Packages/Autoload/Autoload.php');
 
-if (class_exists($requiredController)) {
-    if(count($requiredParameters) == 0){
-        array_push($requiredParameters, "");
+        $Mapper = new Mapper();
+        $modules = new Modules($Mapper);
+        $className = $modules->load();
+        $factory = new Factory();
+        $class = $factory($className);
+        $requiredMethod = $Mapper->Method;
+        $requiredParameters = $Mapper->Parameters;
+
+        if (empty($requiredParameters)){
+            $class->$requiredMethod();
+        }else{
+            $class->$requiredMethod($requiredParameters);
+        }
+
     }
-    $controller = new $requiredController;
-    call_user_func_array(array($controller, $requiredMethod), $requiredParameters);
-}else{
-    $controller = new Errors;
-    $controller->Error404();
-}
 
+}
 
 ?>
